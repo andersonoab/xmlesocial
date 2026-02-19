@@ -104,4 +104,3 @@ Campos principais exibidos:
 - Criar botão “Copiar para modelo ADP” (layout pronto)
 - Criar exportação Excel (XLSX) em vez de CSV
 
-Fim do README.
