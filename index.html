@@ -1,0 +1,1905 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Helper eSocial (S-1200 / S-1210) - Leitor e Copiador</title>
+  <style>
+    :root {
+      /* Sonova (base) */
+      --sonova-blue: #004A99;
+      --sonova-blue-2: #0B66C3;
+      --sonova-blue-3: #1A88E6;
+
+      /* Light theme (estilo calculadora) */
+      --bg: #F4F7FF;
+      --panel: #FFFFFF;
+      --panel2: #F7FAFF;
+
+      --text: #0B1B34;
+      --muted: #51627E;
+      --line: rgba(0, 32, 80, .12);
+
+      --accent: var(--sonova-blue);
+      --danger: #D64545;
+      --ok: var(--sonova-blue-2);
+
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue", Helvetica, "Apple Color Emoji","Segoe UI Emoji";
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: radial-gradient(1200px 600px at 20% 0%, rgba(0,74,153,.10), transparent 60%),
+                  radial-gradient(1000px 500px at 90% 10%, rgba(11,102,195,.08), transparent 55%),
+                  linear-gradient(180deg, #FFFFFF, var(--bg));
+    color: var(--text);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 14px;
+      padding: 14px;
+      height: 100vh;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(247,250,255,1));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 24px rgba(0, 32, 80, .10);
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .topbar {
+      padding: 12px 12px 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(0,74,153,.06), rgba(255,255,255,.85));
+    }
+
+    .title {
+      font-weight: 750;
+      letter-spacing: .2px;
+      font-size: 15px;
+      margin: 0 0 6px 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,74,153,.03);
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.90);
+      color: var(--text);
+      padding: 9px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 12.5px;
+      line-height: 1;
+      transition: transform .02s ease, background .15s ease, border-color .15s ease;
+      user-select: none;
+      box-shadow: 0 6px 14px rgba(0, 32, 80, .06);
+    }
+    .btn:hover { background: #FFFFFF; border-color: rgba(0,74,153,.35); }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary { border-color: rgba(0,74,153,.55); background: rgba(0,74,153,.10); }
+    .btn.danger { border-color: rgba(214,69,69,.45); background: rgba(214,69,69,.08); }
+    .btn.ok { border-color: rgba(11,102,195,.55); background: rgba(11,102,195,.10); }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .drop {
+      border: 1.5px dashed rgba(255,255,255,.18);
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(0,0,0,.06);
+    }
+    .drop.dragover {
+      border-color: rgba(91,176,255,.55);
+      background: rgba(91,176,255,.08);
+    }
+
+    .search {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.92);
+      color: var(--text);
+      padding: 9px 10px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      outline: none;
+      box-shadow: 0 6px 14px rgba(0, 32, 80, .05);
+    }
+    .search::placeholder { color: rgba(81,98,126,.75); }
+    .search::placeholder { color: rgba(169,182,214,.7); }
+
+    .list {
+      padding: 10px;
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .event {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.92);
+      border-radius: 14px;
+      padding: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease;
+      box-shadow: 0 8px 18px rgba(0, 32, 80, .06);
+    }
+    .event:hover { background: #FFFFFF; border-color: rgba(0,74,153,.30); }
+    .event.active { border-color: rgba(0,74,153,.65); background: rgba(0,74,153,.08); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.92);
+      color: var(--muted);
+      white-space: nowrap;
+      box-shadow: 0 6px 14px rgba(0, 32, 80, .05);
+    }
+    .badge.s1200 { border-color: rgba(0,74,153,.45); color: rgba(0,74,153,.95); background: rgba(0,74,153,.08); }
+    .badge.s1210 { border-color: rgba(11,102,195,.45); color: rgba(11,102,195,.95); background: rgba(11,102,195,.08); }
+
+    .event h4 {
+      margin: 8px 0 6px 0;
+      font-size: 13px;
+      letter-spacing: .2px;
+      font-weight: 700;
+    }
+    .event .meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .event .meta div {
+      border: 1px solid rgba(0, 32, 80, .08);
+      background: rgba(247,250,255,.85);
+      padding: 6px 8px;
+      border-radius: 10px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .mainHeader {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(0,74,153,.06), rgba(255,255,255,.85));
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .mainHeader .left {
+      min-width: 260px;
+      flex: 1;
+    }
+    .mainHeader .right {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .mainTitle {
+      margin: 0 0 6px 0;
+      font-size: 16px;
+      font-weight: 780;
+      letter-spacing: .2px;
+    }
+    .mainSub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,74,153,.03);
+      overflow: auto;
+    }
+    .tab {
+      padding: 9px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12.5px;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .tab.active {
+      background: rgba(0,74,153,.16);
+      border-color: rgba(0,74,153,.65);
+      color: var(--text);
+    }
+
+    .content {
+      padding: 12px;
+      overflow: auto;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 1040px) {
+      .app { grid-template-columns: 1fr; height: auto; }
+    }
+    @media (max-width: 840px) {
+      .grid2 { grid-template-columns: 1fr; }
+    }
+
+    .kv {
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.10);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .kv .kvHead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.08);
+    }
+    .kv .kvHead h3 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 750;
+      letter-spacing: .2px;
+    }
+    .kv .kvBody {
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: start;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.06);
+      background: rgba(0,0,0,.10);
+    }
+    .item .k {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(169,182,214,.95);
+      margin-bottom: 5px;
+      overflow-wrap: anywhere;
+    }
+    .item .v {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(255,255,255,.95);
+    }
+    thead th {
+      text-align: left;
+      padding: 10px;
+      font-size: 12px;
+      color: rgba(11,27,52,.85);
+      background: rgba(0,74,153,.06);
+      border-bottom: 1px solid rgba(0, 32, 80, .10);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    tbody td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(0, 32, 80, .08);
+      font-size: 12.5px;
+      color: var(--text);
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    tbody tr:hover { background: rgba(255,255,255,.04); }
+
+    .tableTools {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      width: 100%;
+      margin: 10px 0 10px 0;
+    }
+
+    .toolsLeft {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    .toolsRight {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .tableTools .search {
+      width: auto;
+      flex: 1 1 320px;
+      min-width: 220px;
+      max-width: 520px;
+    }
+
+    @media (max-width: 880px) {
+      .tableTools { grid-template-columns: 1fr; }
+      .toolsRight { justify-content: flex-start; }
+      .tableTools .search { max-width: 100%; }
+    }
+    /* Evita encobrir / cortar controles nas abas com tabela */
+    .tableTools {
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+    .tableTools > div:first-child {
+      flex: 1 1 520px;
+      min-width: 260px;
+      min-height: 0;
+    }
+    .tableTools > div:last-child {
+      flex: 0 0 auto;
+      margin-left: auto;
+      min-height: 0;
+    }
+    .tableTools .search {
+      width: auto;
+      flex: 1 1 320px;
+      min-width: 220px;
+      max-width: 520px;
+    }
+    @media (max-width: 880px) {
+      .tableTools > div:last-child { margin-left: 0; }
+      .tableTools .search { max-width: 100%; }
+    }
+    .pill {
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .mono {
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    pre {
+      margin: 0;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      overflow: auto;
+      max-height: 56vh;
+    }
+
+    .toast {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.68);
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: var(--text);
+      font-size: 12.5px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events: none;
+      max-width: 520px;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+
+    .chk {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.06);
+      background: rgba(0,0,0,.10);
+    }
+    .chk input {
+      margin-top: 2px;
+    }
+
+/* Ajustes de layout/UX (sem alterar funcionalidades) */
+.mainHeader { position: relative; z-index: 6; }
+.tabs { position: relative; z-index: 5; padding-right: 16px; }
+.content { position: relative; z-index: 1; }
+
+.tab { display: inline-flex; align-items: center; justify-content: center; line-height: 1.15; }
+
+/* Dropzone alinhada ao tema claro */
+.drop { border-color: rgba(0,74,153,.25); background: rgba(0,74,153,.03); }
+.drop.dragover { border-color: rgba(0,74,153,.55); background: rgba(0,74,153,.08); }
+
+/* Coluna "Copiar": evita quebra de texto (ex.: "Valor", "Linha") */
+.copyColHeader { width: 176px; }
+.copyCell { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.copyCell .btn {
+  padding: 7px 9px;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  min-width: 68px;
+}
+
+    .muted { color: var(--muted); }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="card sidebar">
+      <div class="topbar">
+        <p class="title">Helper eSocial</p>
+        <p class="subtitle">Importe XMLs do S-1200 (Remuneração) e S-1210 (Pagamentos). A tela separa os dados e permite copiar valores e verbas sem perder nenhum campo (há visão completa por caminho).</p>
+      </div>
+
+      <div class="controls">
+        <div class="drop" id="dropZone">
+          <div class="row">
+            <label class="btn primary" for="fileInput">Importar XML</label>
+            <input id="fileInput" type="file" accept=".xml,text/xml,application/xml" multiple />
+            <button class="btn" id="btnLoadEmbedded">Carregar XMLs embutidos</button>
+            <button class="btn danger" id="btnClear">Limpar</button>
+          </div>
+          <div class="hint" style="margin-top:8px">
+            Dica: arraste e solte os XMLs aqui. Você pode carregar vários. O sistema identifica automaticamente S-1200 e S-1210.
+          </div>
+        </div>
+
+        <input class="search" id="eventFilter" placeholder="Filtrar eventos (CPF, período, arquivo, Id, rubrica)" />
+        <div class="row">
+          <span class="badge" id="countBadge">0 arquivo(s)</span>
+          <span class="badge s1200" id="countS1200">S-1200: 0</span>
+          <span class="badge s1210" id="countS1210">S-1210: 0</span>
+        </div>
+      </div>
+
+      <div class="list" id="eventList"></div>
+    </div>
+
+    <div class="card main">
+      <div class="mainHeader">
+        <div class="left">
+          <p class="mainTitle" id="mainTitle">Nenhum evento selecionado</p>
+          <p class="mainSub" id="mainSub">Importe os XMLs para começar.</p>
+        </div>
+        <div class="right">
+          <button class="btn" id="btnCopySummary">Copiar resumo</button>
+          <button class="btn" id="btnCopyJSON">Copiar JSON extraído</button>
+          <button class="btn" id="btnExportCSV">Exportar CSV (aba atual)</button>
+          <button class="btn ok" id="btnResetChecklist">Reset checklist</button>
+        </div>
+      </div>
+
+      <div class="tabs" id="tabs">
+        <div class="tab active" data-tab="resumo">Resumo</div>
+        <div class="tab" data-tab="verbas">Verbas / Remuneração (S-1200)</div>
+        <div class="tab" data-tab="pagamentos">Pagamentos (S-1210)</div>
+        <div class="tab" data-tab="todos">Todos os dados (caminho)</div>
+        <div class="tab" data-tab="xml">XML bruto</div>
+      </div>
+
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const EMBEDDED_XMLS = [{"name": "Remun_2666_001_1927925300000002026021909032548558.xml", "text": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><eSocial xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns=\"http://www.esocial.gov.br/schema/evt/evtRemun/v_S_01_03_00\"><evtRemun Id=\"ID1927925300000002026021909032548558\"><ideEvento><indRetif>1</indRetif>\n<indApuracao>1</indApuracao>\n<perApur>2026-01</perApur>\n<tpAmb>1</tpAmb>\n<procEmi>1</procEmi>\n<verProc>ADPBr-Expert-V1.0</verProc>\n</ideEvento>\n<ideEmpregador><tpInsc>1</tpInsc>\n<nrInsc>92792530</nrInsc>\n</ideEmpregador>\n<ideTrabalhador><cpfTrab>01995623180</cpfTrab>\n</ideTrabalhador>\n<dmDev><ideDmDev>E6555_11837</ideDmDev>\n<codCateg>101</codCateg>\n<infoPerApur><ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerApur><matricula>11837</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<qtdRubr>220.00</qtdRubr>\n<vrRubr>5016.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_0501</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>444.23</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_0620</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>2310.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_2821</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>1920.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_3090</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>89.90</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_3111</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>98.63</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_3419</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>37.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5500</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>992.27</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5560</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>894.51</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5610</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>123.24</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerApur>\n</ideEstabLot>\n</infoPerApur>\n</dmDev>\n<dmDev><ideDmDev>E6568_11837</ideDmDev>\n<codCateg>101</codCateg>\n<infoPerApur><ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerApur><matricula>11837</matricula>\n<itensRemun><codRubr>ADP2666_PAY_2820</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>1920.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerApur>\n</ideEstabLot>\n</infoPerApur>\n</dmDev>\n<dmDev><ideDmDev>E6555_11837_RRA</ideDmDev>\n<codCateg>101</codCateg>\n<indRRA>S</indRRA>\n<infoRRA><tpProcRRA>1</tpProcRRA>\n<descRRA>Dissídio ;RRA</descRRA>\n<qtdMesesRRA>9</qtdMesesRRA>\n</infoRRA>\n<infoPerAnt><ideADC><dtAcConv>2026-01-02</dtAcConv>\n<tpAcConv>A</tpAcConv>\n<dsc>Dissídio ;Coletivo</dsc>\n<remunSuc>N</remunSuc>\n<idePeriodo><perRef>2025-08</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11837</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>216.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-05</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11837</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>216.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-06</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11837</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>216.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-07</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11837</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>216.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-09</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11837</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>216.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-10</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11837</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>216.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5560</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>0.10</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-11</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11837</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>216.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-12</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11837</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>216.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_0512</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>216.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_0517</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>195.02</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n</ideADC>\n</infoPerAnt>\n</dmDev>\n</evtRemun>\n</eSocial>"}, {"name": "Remun_2666_001_1927925300000002026021909032548559.xml", "text": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><eSocial xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns=\"http://www.esocial.gov.br/schema/evt/evtRemun/v_S_01_03_00\"><evtRemun Id=\"ID1927925300000002026021909032548559\"><ideEvento><indRetif>1</indRetif>\n<indApuracao>1</indApuracao>\n<perApur>2026-01</perApur>\n<tpAmb>1</tpAmb>\n<procEmi>1</procEmi>\n<verProc>ADPBr-Expert-V1.0</verProc>\n</ideEvento>\n<ideEmpregador><tpInsc>1</tpInsc>\n<nrInsc>92792530</nrInsc>\n</ideEmpregador>\n<ideTrabalhador><cpfTrab>05390088182</cpfTrab>\n</ideTrabalhador>\n<dmDev><ideDmDev>E6555_11836</ideDmDev>\n<codCateg>101</codCateg>\n<infoPerApur><ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerApur><matricula>11836</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<qtdRubr>220.00</qtdRubr>\n<vrRubr>2267.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_0501</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>74.04</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_0620</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>385.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_2821</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>847.20</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_3112</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>67.07</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_3419</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>37.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5025</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>607.20</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5560</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>224.35</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5610</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>61.62</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5901</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>108.90</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerApur>\n</ideEstabLot>\n</infoPerApur>\n</dmDev>\n<dmDev><ideDmDev>E6568_11836</ideDmDev>\n<codCateg>101</codCateg>\n<infoPerApur><ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerApur><matricula>11836</matricula>\n<itensRemun><codRubr>ADP2666_PAY_2820</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>847.20</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerApur>\n</ideEstabLot>\n</infoPerApur>\n</dmDev>\n<dmDev><ideDmDev>E6555_11836_RRA</ideDmDev>\n<codCateg>101</codCateg>\n<indRRA>S</indRRA>\n<infoRRA><tpProcRRA>1</tpProcRRA>\n<descRRA>Dissídio ;RRA</descRRA>\n<qtdMesesRRA>9</qtdMesesRRA>\n</infoRRA>\n<infoPerAnt><ideADC><dtAcConv>2026-01-02</dtAcConv>\n<tpAcConv>A</tpAcConv>\n<dsc>Dissídio ;Coletivo</dsc>\n<remunSuc>N</remunSuc>\n<idePeriodo><perRef>2025-08</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11836</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>126.63</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5560</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>15.20</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-05</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11836</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>126.63</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5560</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>15.20</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-06</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11836</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>126.63</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-07</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11836</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>126.63</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5560</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>15.20</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-09</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11836</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>126.63</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5560</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>15.20</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-10</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11836</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>149.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5560</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>17.88</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-11</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11836</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>149.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5560</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>20.86</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n<idePeriodo><perRef>2025-12</perRef>\n<ideEstabLot><tpInsc>1</tpInsc>\n<nrInsc>92792530016646</nrInsc>\n<codLotacao>ADP2666_L_515_1</codLotacao>\n<remunPerAnt><matricula>11836</matricula>\n<itensRemun><codRubr>ADP2666_PAY_0010</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>149.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_5560</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>20.86</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_0512</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>149.00</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_0517</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>90.20</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<itensRemun><codRubr>ADP2666_PAY_9960</codRubr>\n<ideTabRubr>ADP_1</ideTabRubr>\n<vrRubr>28.70</vrRubr>\n<indApurIR>0</indApurIR>\n</itensRemun>\n<infoAgNocivo><grauExp>1</grauExp>\n</infoAgNocivo>\n</remunPerAnt>\n</ideEstabLot>\n</idePeriodo>\n</ideADC>\n</infoPerAnt>\n</dmDev>\n</evtRemun>\n</eSocial>"}, {"name": "Pgtos_2666_001_1927925300000002026021909033148564 -1210.xml", "text": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><eSocial xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns=\"http://www.esocial.gov.br/schema/evt/evtPgtos/v_S_01_03_00\"><evtPgtos Id=\"ID1927925300000002026021909033148564\"><ideEvento><indRetif>1</indRetif>\n<perApur>2026-01</perApur>\n<tpAmb>1</tpAmb>\n<procEmi>1</procEmi>\n<verProc>ADPBr-Expert-V1.0</verProc>\n</ideEvento>\n<ideEmpregador><tpInsc>1</tpInsc>\n<nrInsc>92792530</nrInsc>\n</ideEmpregador>\n<ideBenef><cpfBenef>01995623180</cpfBenef>\n<infoPgto><dtPgto>2026-01-14</dtPgto>\n<tpPgto>1</tpPgto>\n<perRef>2026-01</perRef>\n<ideDmDev>E6568_11837</ideDmDev>\n<vrLiq>1920.00</vrLiq>\n</infoPgto>\n<infoPgto><dtPgto>2026-01-30</dtPgto>\n<tpPgto>1</tpPgto>\n<perRef>2026-01</perRef>\n<ideDmDev>E6555_11837_RRA</ideDmDev>\n<vrLiq>2138.92</vrLiq>\n</infoPgto>\n<infoPgto><dtPgto>2026-01-30</dtPgto>\n<tpPgto>1</tpPgto>\n<perRef>2026-01</perRef>\n<ideDmDev>E6555_11837</ideDmDev>\n<vrLiq>3688.68</vrLiq>\n</infoPgto>\n<infoIRComplem><planSaude><cnpjOper>02866602000151</cnpjOper>\n<regANS>416428</regANS>\n<vlrSaudeTit>98.63</vlrSaudeTit>\n</planSaude>\n</infoIRComplem>\n</ideBenef>\n</evtPgtos>\n</eSocial>"}, {"name": "Pgtos_2666_001_1927925300000002026021909033148565 - 1210.xml", "text": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><eSocial xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns=\"http://www.esocial.gov.br/schema/evt/evtPgtos/v_S_01_03_00\"><evtPgtos Id=\"ID1927925300000002026021909033148565\"><ideEvento><indRetif>1</indRetif>\n<perApur>2026-01</perApur>\n<tpAmb>1</tpAmb>\n<procEmi>1</procEmi>\n<verProc>ADPBr-Expert-V1.0</verProc>\n</ideEvento>\n<ideEmpregador><tpInsc>1</tpInsc>\n<nrInsc>92792530</nrInsc>\n</ideEmpregador>\n<ideBenef><cpfBenef>05390088182</cpfBenef>\n<infoPgto><dtPgto>2026-01-14</dtPgto>\n<tpPgto>1</tpPgto>\n<perRef>2026-01</perRef>\n<ideDmDev>E6568_11836</ideDmDev>\n<vrLiq>847.20</vrLiq>\n</infoPgto>\n<infoPgto><dtPgto>2026-01-30</dtPgto>\n<tpPgto>1</tpPgto>\n<perRef>2026-01</perRef>\n<ideDmDev>E6555_11836_RRA</ideDmDev>\n<vrLiq>1170.25</vrLiq>\n</infoPgto>\n<infoPgto><dtPgto>2026-01-30</dtPgto>\n<tpPgto>1</tpPgto>\n<perRef>2026-01</perRef>\n<ideDmDev>E6555_11836</ideDmDev>\n<vrLiq>1453.90</vrLiq>\n</infoPgto>\n<infoIRComplem><infoDep><cpfDep>09855821114</cpfDep>\n<dtNascto>2016-10-29</dtNascto>\n<nome>KAUA ;RODRIGUES ;SANTANA</nome>\n<depIRRF>S</depIRRF>\n<tpDep>03</tpDep>\n</infoDep>\n<infoIRCR><tpCR>056107</tpCR>\n<dedDepen><tpRend>11</tpRend>\n<cpfDep>09855821114</cpfDep>\n<vlrDedDep>189.59</vlrDedDep>\n</dedDepen>\n<dedDepen><tpRend>12</tpRend>\n<cpfDep>09855821114</cpfDep>\n<vlrDedDep>189.59</vlrDedDep>\n</dedDepen>\n</infoIRCR>\n<planSaude><cnpjOper>01685053000156</cnpjOper>\n<regANS>006246</regANS>\n<vlrSaudeTit>67.07</vlrSaudeTit>\n</planSaude>\n</infoIRComplem>\n</ideBenef>\n</evtPgtos>\n</eSocial>"}];
+
+  const state = {
+    events: [],          // {id, type, filename, text, doc, summary, extracted, flattened}
+    activeId: null,
+    activeTab: "resumo"
+  };
+
+  function toast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove("show"), 1600);
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast("Copiado");
+    } catch (e) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      toast("Copiado");
+    }
+  }
+
+  function fmtMoney(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return v ?? "";
+    return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function localName(node) {
+    return node?.localName || (node?.nodeName ? node.nodeName.split(":").pop() : "");
+  }
+
+  function firstText(doc, selectors) {
+    for (const sel of selectors) {
+      const el = doc.querySelector(sel);
+      if (el && el.textContent && el.textContent.trim()) return el.textContent.trim();
+    }
+    return null;
+  }
+
+  function flattenWithIndexes(rootEl, options={}) {
+    const out = [];
+    const includeSignature = !!options.includeSignature;
+    function rec(el, path) {
+      if (!el || el.nodeType !== 1) return;
+
+      const tag = localName(el);
+
+      if (!includeSignature && (tag === "Signature" || tag === "SignedInfo" || tag === "SignatureValue" || tag === "KeyInfo")) {
+        return;
+      }
+
+      if (el.attributes && el.attributes.length) {
+        for (const a of el.attributes) {
+          const k = a.name;
+          const v = (a.value || "").trim();
+          if (v) out.push({ path: path + "/@" + k, value: v });
+        }
+      }
+
+      const childEls = Array.from(el.childNodes).filter(n => n.nodeType === 1);
+      const rawText = (el.textContent || "");
+      if (childEls.length === 0) {
+        const v = rawText.trim();
+        if (v) out.push({ path, value: v });
+        return;
+      }
+
+      const counts = {};
+      for (const ch of childEls) {
+        const t = localName(ch);
+        counts[t] = (counts[t] || 0) + 1;
+      }
+      const seen = {};
+      for (const ch of childEls) {
+        const t = localName(ch);
+        seen[t] = (seen[t] || 0) + 1;
+        const idx = counts[t] > 1 ? "[" + seen[t] + "]" : "";
+        rec(ch, path + "/" + t + idx);
+      }
+    }
+    rec(rootEl, "/" + localName(rootEl));
+    return out;
+  }
+  function extractS1200(doc) {
+    const evt = doc.querySelector("evtRemun");
+    const get = (sel) => {
+      const el = evt?.querySelector(sel);
+      return el?.textContent?.trim() || "";
+    };
+
+    const summary = {
+      type: "S-1200",
+      id: evt?.getAttribute("Id") || "",
+      perApur: get("ideEvento > perApur"),
+      indRetif: get("ideEvento > indRetif"),
+      tpAmb: get("ideEvento > tpAmb"),
+      verProc: get("ideEvento > verProc"),
+      nrInsc: get("ideEmpregador > nrInsc"),
+      tpInsc: get("ideEmpregador > tpInsc"),
+      cpfTrab: get("ideTrabalhador > cpfTrab"),
+      matricula: get("ideTrabalhador > matricula"),
+    };
+
+    const dmDevs = [];
+    evt?.querySelectorAll(":scope > dmDev").forEach((dm) => {
+      const dmObj = {
+        ideDmDev: dm.querySelector(":scope > ideDmDev")?.textContent?.trim() || "",
+        codCateg: dm.querySelector(":scope > codCateg")?.textContent?.trim() || "",
+        infoPerApur: [],
+        infoPerAnt: []
+      };
+
+      // infoPerApur (período de apuração)
+      dm.querySelectorAll(":scope > infoPerApur").forEach((perApurNode) => {
+        const ideEstabLots = [];
+        perApurNode.querySelectorAll(":scope > ideEstabLot").forEach((ideEstabLot) => {
+          const estabObj = {
+            tpInsc: ideEstabLot.querySelector(":scope > tpInsc")?.textContent?.trim() || "",
+            nrInsc: ideEstabLot.querySelector(":scope > nrInsc")?.textContent?.trim() || "",
+            codLotacao: ideEstabLot.querySelector(":scope > codLotacao")?.textContent?.trim() || "",
+            itensRemun: [],
+            infoRRA: null
+          };
+
+          ideEstabLot.querySelectorAll(":scope remunPerApur > itensRemun").forEach((it) => {
+            estabObj.itensRemun.push({
+              codRubr: it.querySelector(":scope > codRubr")?.textContent?.trim() || "",
+              ideTabRubr: it.querySelector(":scope > ideTabRubr")?.textContent?.trim() || "",
+              qtdRubr: it.querySelector(":scope > qtdRubr")?.textContent?.trim() || "",
+              fatorRubr: it.querySelector(":scope > fatorRubr")?.textContent?.trim() || "",
+              vrRubr: it.querySelector(":scope > vrRubr")?.textContent?.trim() || "",
+              indApurIR: it.querySelector(":scope > indApurIR")?.textContent?.trim() || ""
+            });
+          });
+
+          const infoRRA = ideEstabLot.querySelector(":scope remunPerApur > infoRRA");
+          if (infoRRA) {
+            estabObj.infoRRA = {
+              descRRA: infoRRA.querySelector(":scope > descRRA")?.textContent?.trim() || "",
+              qtdMesesRRA: infoRRA.querySelector(":scope > qtdMesesRRA")?.textContent?.trim() || "",
+              despProcJud: infoRRA.querySelector(":scope > despProcJud")?.textContent?.trim() || "",
+              ideAdv: Array.from(infoRRA.querySelectorAll(":scope ideAdv")).map(a => ({
+                tpInsc: a.querySelector(":scope > tpInsc")?.textContent?.trim() || "",
+                nrInsc: a.querySelector(":scope > nrInsc")?.textContent?.trim() || "",
+                vrAdv: a.querySelector(":scope > vrAdv")?.textContent?.trim() || ""
+              })),
+              infoProcJud: Array.from(infoRRA.querySelectorAll(":scope infoProcJud")).map(p => ({
+                tpProcRRA: p.querySelector(":scope > tpProcRRA")?.textContent?.trim() || "",
+                nrProcRRA: p.querySelector(":scope > nrProcRRA")?.textContent?.trim() || "",
+                descRRA: p.querySelector(":scope > descRRA")?.textContent?.trim() || ""
+              }))
+            };
+          }
+
+          ideEstabLots.push(estabObj);
+        });
+
+        dmObj.infoPerApur.push({
+          perRef: perApurNode.querySelector(":scope > perRef")?.textContent?.trim() || "",
+          indApuracao: perApurNode.querySelector(":scope > indApuracao")?.textContent?.trim() || "",
+          ideEstabLot: ideEstabLots
+        });
+      });
+
+      // infoPerAnt (diferenças retroativas - ex.: CCT / Dissídio / Acordo / Convenção)
+      dm.querySelectorAll(":scope > infoPerAnt").forEach((infoPerAntNode) => {
+        const adcs = [];
+        infoPerAntNode.querySelectorAll(":scope > ideADC").forEach((adc) => {
+          const adcObj = {
+            dtAcConv: adc.querySelector(":scope > dtAcConv")?.textContent?.trim() || "",
+            tpAcConv: adc.querySelector(":scope > tpAcConv")?.textContent?.trim() || "",
+            dsc: adc.querySelector(":scope > dsc")?.textContent?.trim() || "",
+            remunSuc: adc.querySelector(":scope > remunSuc")?.textContent?.trim() || "",
+            idePeriodo: []
+          };
+
+          adc.querySelectorAll(":scope > idePeriodo").forEach((ip) => {
+            const ipObj = {
+              perRef: ip.querySelector(":scope > perRef")?.textContent?.trim() || "",
+              ideEstabLot: []
+            };
+
+            ip.querySelectorAll(":scope > ideEstabLot").forEach((ideEstabLot) => {
+              const estabObj = {
+                tpInsc: ideEstabLot.querySelector(":scope > tpInsc")?.textContent?.trim() || "",
+                nrInsc: ideEstabLot.querySelector(":scope > nrInsc")?.textContent?.trim() || "",
+                codLotacao: ideEstabLot.querySelector(":scope > codLotacao")?.textContent?.trim() || "",
+                itensRemun: []
+              };
+
+              ideEstabLot.querySelectorAll(":scope remunPerAnt > itensRemun").forEach((it) => {
+                estabObj.itensRemun.push({
+                  codRubr: it.querySelector(":scope > codRubr")?.textContent?.trim() || "",
+                  ideTabRubr: it.querySelector(":scope > ideTabRubr")?.textContent?.trim() || "",
+                  qtdRubr: it.querySelector(":scope > qtdRubr")?.textContent?.trim() || "",
+                  fatorRubr: it.querySelector(":scope > fatorRubr")?.textContent?.trim() || "",
+                  vrRubr: it.querySelector(":scope > vrRubr")?.textContent?.trim() || "",
+                  indApurIR: it.querySelector(":scope > indApurIR")?.textContent?.trim() || ""
+                });
+              });
+
+              ipObj.ideEstabLot.push(estabObj);
+            });
+
+            adcObj.idePeriodo.push(ipObj);
+          });
+
+          adcs.push(adcObj);
+        });
+
+        dmObj.infoPerAnt.push({ ideADC: adcs });
+      });
+
+      dmDevs.push(dmObj);
+    });
+
+    // Tabela de rubricas (inclui apuração + retroativos)
+    const itensTable = [];
+    dmDevs.forEach(dm => {
+      // Apuração
+      dm.infoPerApur.forEach(p => {
+        p.ideEstabLot.forEach(est => {
+          est.itensRemun.forEach(it => {
+            itensTable.push({
+              origem: "APUR",
+              ideDmDev: dm.ideDmDev,
+              codCateg: dm.codCateg,
+              perRef: p.perRef,
+              indApuracao: p.indApuracao,
+              estab_tpInsc: est.tpInsc,
+              estab_nrInsc: est.nrInsc,
+              codLotacao: est.codLotacao,
+              codRubr: it.codRubr,
+              ideTabRubr: it.ideTabRubr,
+              qtdRubr: it.qtdRubr,
+              fatorRubr: it.fatorRubr,
+              vrRubr: it.vrRubr,
+              indApurIR: it.indApurIR,
+              dtAcConv: "",
+              tpAcConv: "",
+              dscADC: ""
+            });
+          });
+        });
+      });
+
+      // Retroativos (CCT etc.)
+      dm.infoPerAnt.forEach(wrap => {
+        (wrap.ideADC || []).forEach(adc => {
+          (adc.idePeriodo || []).forEach(ip => {
+            (ip.ideEstabLot || []).forEach(est => {
+              (est.itensRemun || []).forEach(it => {
+                itensTable.push({
+                  origem: "ANT",
+                  ideDmDev: dm.ideDmDev,
+                  codCateg: dm.codCateg,
+                  perRef: ip.perRef,
+                  indApuracao: "",
+                  estab_tpInsc: est.tpInsc,
+                  estab_nrInsc: est.nrInsc,
+                  codLotacao: est.codLotacao,
+                  codRubr: it.codRubr,
+                  ideTabRubr: it.ideTabRubr,
+                  qtdRubr: it.qtdRubr,
+                  fatorRubr: it.fatorRubr,
+                  vrRubr: it.vrRubr,
+                  indApurIR: it.indApurIR,
+                  dtAcConv: adc.dtAcConv,
+                  tpAcConv: adc.tpAcConv,
+                  dscADC: adc.dsc
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    return {
+      summary,
+      data: { dmDevs },
+      tables: { itensRemun: itensTable }
+    };
+  }
+
+  function extractS1210(doc) {
+    const evt = doc.querySelector("evtPgtos");
+    const get = (sel) => {
+      const el = evt?.querySelector(sel);
+      return el?.textContent?.trim() || "";
+    };
+
+    const summary = {
+      type: "S-1210",
+      id: evt?.getAttribute("Id") || "",
+      perApur: get("ideEvento > perApur"),
+      indRetif: get("ideEvento > indRetif"),
+      tpAmb: get("ideEvento > tpAmb"),
+      verProc: get("ideEvento > verProc"),
+      nrInsc: get("ideEmpregador > nrInsc"),
+      tpInsc: get("ideEmpregador > tpInsc"),
+      cpfBenef: get("ideBenef > cpfBenef")
+    };
+
+    const infoPgtoRows = [];
+    evt?.querySelectorAll("ideBenef > infoPgto").forEach(pg => {
+      infoPgtoRows.push({
+        dtPgto: pg.querySelector(":scope > dtPgto")?.textContent?.trim() || "",
+        tpPgto: pg.querySelector(":scope > tpPgto")?.textContent?.trim() || "",
+        perRef: pg.querySelector(":scope > perRef")?.textContent?.trim() || "",
+        ideDmDev: pg.querySelector(":scope > ideDmDev")?.textContent?.trim() || "",
+        vrLiq: pg.querySelector(":scope > vrLiq")?.textContent?.trim() || ""
+      });
+    });
+
+    const deps = [];
+    evt?.querySelectorAll("ideBenef infoIRComplem infoDep").forEach(d => {
+      deps.push({
+        tpDep: d.querySelector(":scope > tpDep")?.textContent?.trim() || "",
+        cpfDep: d.querySelector(":scope > cpfDep")?.textContent?.trim() || "",
+        nome: d.querySelector(":scope > nome")?.textContent?.trim() || "",
+        dtNascto: d.querySelector(":scope > dtNascto")?.textContent?.trim() || "",
+        depIRRF: d.querySelector(":scope > depIRRF")?.textContent?.trim() || ""
+      });
+    });
+
+    const planSaude = [];
+    evt?.querySelectorAll("ideBenef infoIRComplem planSaude").forEach(p => {
+      planSaude.push({
+        cnpjOper: p.querySelector(":scope > cnpjOper")?.textContent?.trim() || "",
+        regANS: p.querySelector(":scope > regANS")?.textContent?.trim() || "",
+        vlrSaudeTit: p.querySelector(":scope > vlrSaudeTit")?.textContent?.trim() || "",
+      });
+    });
+
+    const infoIR = [];
+    evt?.querySelectorAll("ideBenef infoIRComplem infoIR").forEach(i => {
+      infoIR.push({
+        tpCR: i.querySelector(":scope > tpCR")?.textContent?.trim() || "",
+        tpRend: i.querySelector(":scope > tpRend")?.textContent?.trim() || "",
+        vlrDedDep: i.querySelector(":scope > vlrDedDep")?.textContent?.trim() || ""
+      });
+    });
+
+    return {
+      summary,
+      data: { deps, planSaude, infoIR },
+      tables: { infoPgto: infoPgtoRows }
+    };
+  }
+
+  function parseXmlText(text) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, "application/xml");
+    const err = doc.querySelector("parsererror");
+    if (err) {
+      throw new Error("XML inválido: " + (err.textContent || "").slice(0, 260));
+    }
+    return doc;
+  }
+
+  function detectType(doc) {
+    if (doc.querySelector("evtRemun")) return "S-1200";
+    if (doc.querySelector("evtPgtos")) return "S-1210";
+    return "Desconhecido";
+  }
+
+  function buildEventFromFile(filename, text) {
+    const doc = parseXmlText(text);
+    const type = detectType(doc);
+    const rootEl = doc.documentElement;
+    const flattened = flattenWithIndexes(rootEl, { includeSignature: false });
+
+    let extracted = null;
+    if (type === "S-1200") extracted = extractS1200(doc);
+    if (type === "S-1210") extracted = extractS1210(doc);
+
+    const summary = extracted?.summary || {
+      type,
+      id: firstText(doc, ["evtRemun","evtPgtos"]) || "",
+      perApur: firstText(doc, ["perApur"]) || "",
+      nrInsc: firstText(doc, ["nrInsc"]) || ""
+    };
+
+    const id = filename + "::" + (summary.id || Math.random().toString(16).slice(2));
+    return {
+      id,
+      type,
+      filename,
+      text,
+      doc,
+      flattened,
+      extracted,
+      summary
+    };
+  }
+
+  function updateCounts() {
+    const total = state.events.length;
+    const s1200 = state.events.filter(e => e.type === "S-1200").length;
+    const s1210 = state.events.filter(e => e.type === "S-1210").length;
+    document.getElementById("countBadge").textContent = total + " arquivo(s)";
+    document.getElementById("countS1200").textContent = "S-1200: " + s1200;
+    document.getElementById("countS1210").textContent = "S-1210: " + s1210;
+  }
+
+  function renderEventList() {
+    const list = document.getElementById("eventList");
+    list.innerHTML = "";
+    const q = (document.getElementById("eventFilter").value || "").trim().toLowerCase();
+
+    const filtered = state.events.filter(e => {
+      if (!q) return true;
+      const hay = [
+        e.filename,
+        e.type,
+        e.summary?.id,
+        e.summary?.perApur,
+        e.summary?.cpfTrab,
+        e.summary?.cpfBenef,
+        e.summary?.nrInsc
+      ].filter(Boolean).join(" ").toLowerCase();
+
+      const rubs = (e.extracted?.tables?.itensRemun || []).slice(0, 2500).map(r => r.codRubr).join(" ").toLowerCase();
+      return hay.includes(q) || rubs.includes(q);
+    });
+
+    filtered.forEach(e => {
+      const div = document.createElement("div");
+      div.className = "event" + (e.id === state.activeId ? " active" : "");
+      div.onclick = () => selectEvent(e.id);
+
+      const badgeClass = (e.type === "S-1200") ? "badge s1200" : (e.type === "S-1210") ? "badge s1210" : "badge";
+      const badgeText = (e.type === "S-1200") ? "S-1200" : (e.type === "S-1210") ? "S-1210" : "Desconhecido";
+
+      const cpf = e.summary?.cpfTrab || e.summary?.cpfBenef || "";
+      const per = e.summary?.perApur || "";
+      const idEvt = e.summary?.id || "";
+      const nrInsc = e.summary?.nrInsc || "";
+
+      div.innerHTML = `
+        <div class="${badgeClass}">${badgeText}</div>
+        <h4 title="${e.filename}">${e.filename}</h4>
+        <div class="meta">
+          <div title="Período de apuração">${per ? "perApur: " + per : "perApur: (vazio)"}</div>
+          <div title="Documento (CPF)">${cpf ? "CPF: " + cpf : "CPF: (não encontrado)"}</div>
+          <div title="Empregador">${nrInsc ? "nrInsc: " + nrInsc : "nrInsc: (vazio)"}</div>
+          <div title="Id do evento">${idEvt ? "Id: " + idEvt : "Id: (vazio)"}</div>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+
+    if (filtered.length === 0) {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "Nenhum evento encontrado no filtro.";
+      list.appendChild(p);
+    }
+  }
+
+  function setMainHeader(e) {
+    const t = document.getElementById("mainTitle");
+    const s = document.getElementById("mainSub");
+    if (!e) {
+      t.textContent = "Nenhum evento selecionado";
+      s.textContent = "Importe os XMLs para começar.";
+      return;
+    }
+    const cpf = e.summary?.cpfTrab || e.summary?.cpfBenef || "(sem CPF)";
+    const per = e.summary?.perApur || "(sem perApur)";
+    t.textContent = `${e.type} | ${cpf} | ${per}`;
+    s.textContent = `Arquivo: ${e.filename}`;
+  }
+
+  function tabEl(name) {
+    return document.querySelector(`.tab[data-tab="${name}"]`);
+  }
+
+  function setActiveTab(name) {
+    state.activeTab = name;
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+
+    const tab = tabEl(name);
+    tab?.classList.add("active");
+    // Garante que a aba ativa fique visível mesmo quando a barra de abas estiver rolável
+    try { tab?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" }); } catch (e) {}
+
+    const c = document.getElementById("content");
+    if (c) c.scrollTop = 0;
+    renderContent();
+  }
+
+  function selectEvent(id) {
+    state.activeId = id;
+    renderEventList();
+    setMainHeader(getActiveEvent());
+    const c = document.getElementById("content");
+    if (c) c.scrollTop = 0;
+    renderContent();
+  }
+
+  function getActiveEvent() {
+    return state.events.find(e => e.id === state.activeId) || null;
+  }
+
+  function kvBlock(title, kvPairs, extraButtons=[]) {
+    const wrap = document.createElement("div");
+    wrap.className = "kv";
+    const head = document.createElement("div");
+    head.className = "kvHead";
+    head.innerHTML = `<h3>${title}</h3>`;
+    const btns = document.createElement("div");
+    btns.style.display = "flex";
+    btns.style.gap = "8px";
+    extraButtons.forEach(b => btns.appendChild(b));
+    head.appendChild(btns);
+
+    const body = document.createElement("div");
+    body.className = "kvBody";
+
+    kvPairs.forEach(({k, v}) => {
+      const item = document.createElement("div");
+      item.className = "item";
+      const left = document.createElement("div");
+      left.innerHTML = `<div class="k">${escapeHtml(k)}</div><div class="v">${escapeHtml(v ?? "")}</div>`;
+      const right = document.createElement("div");
+      right.style.display = "flex";
+      right.style.gap = "8px";
+      right.style.alignItems = "center";
+
+      const b1 = document.createElement("button");
+      b1.className = "btn";
+      b1.textContent = "Copiar valor";
+      b1.onclick = () => copyToClipboard(String(v ?? ""));
+      const b2 = document.createElement("button");
+      b2.className = "btn";
+      b2.textContent = "Copiar k=v";
+      b2.onclick = () => copyToClipboard(`${k}=${v ?? ""}`);
+      right.appendChild(b1);
+      right.appendChild(b2);
+
+      item.appendChild(left);
+      item.appendChild(right);
+      body.appendChild(item);
+    });
+
+    wrap.appendChild(head);
+    wrap.appendChild(body);
+    return wrap;
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function buildChecklist(event) {
+    const box = document.createElement("div");
+    box.className = "kv";
+
+    const head = document.createElement("div");
+    head.className = "kvHead";
+    head.innerHTML = `<h3>Checklist de digitação manual</h3>`;
+    const btn = document.createElement("button");
+    btn.className = "btn ok";
+    btn.textContent = "Marcar tudo";
+    btn.onclick = () => {
+      const key = checklistKey(event);
+      const items = defaultChecklistItems(event);
+      const done = Object.fromEntries(items.map(i => [i.id, true]));
+      localStorage.setItem(key, JSON.stringify(done));
+      renderContent();
+      toast("Checklist atualizado");
+    };
+    head.appendChild(btn);
+
+    const body = document.createElement("div");
+    body.className = "kvBody";
+
+    const items = defaultChecklistItems(event);
+    const done = loadChecklist(event);
+
+    items.forEach(i => {
+      const row = document.createElement("label");
+      row.className = "chk";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = !!done[i.id];
+      cb.onchange = () => {
+        done[i.id] = cb.checked;
+        localStorage.setItem(checklistKey(event), JSON.stringify(done));
+      };
+      const text = document.createElement("div");
+      text.innerHTML = `<div style="font-weight:700">${escapeHtml(i.title)}</div><div class="muted" style="font-size:12px; line-height:1.35; margin-top:2px">${escapeHtml(i.desc)}</div>`;
+      row.appendChild(cb);
+      row.appendChild(text);
+      body.appendChild(row);
+    });
+
+    box.appendChild(head);
+    box.appendChild(body);
+    return box;
+  }
+
+  function checklistKey(event) {
+    return "esocial_checklist__" + (event.summary?.id || event.filename || "semid");
+  }
+
+  function loadChecklist(event) {
+    try {
+      return JSON.parse(localStorage.getItem(checklistKey(event)) || "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  function defaultChecklistItems(event) {
+    const is1200 = event.type === "S-1200";
+    const is1210 = event.type === "S-1210";
+
+    const base = [
+      { id: "open", title: "Abrir evento correto no portal", desc: "No eSocial, selecione o empregador e o ambiente (tpAmb) compatível com o XML." },
+      { id: "ideEvento", title: "Preencher ideEvento", desc: "Conferir indRetif, perApur, tpAmb, procEmi e verProc." },
+      { id: "ideEmp", title: "Preencher ideEmpregador", desc: "Conferir tpInsc e nrInsc." },
+    ];
+
+    if (is1200) {
+      base.push(
+        { id: "ideTrab", title: "Preencher ideTrabalhador", desc: "Conferir cpfTrab e matrícula (se existir no XML)." },
+        { id: "dmDev", title: "Digitar dmDev", desc: "Criar o demonstrativo (ideDmDev) e categoria (codCateg)." },
+        { id: "estabLot", title: "Digitar ideEstabLot / lotação", desc: "Conferir tpInsc, nrInsc e codLotacao." },
+        { id: "itens", title: "Digitar itensRemun (verbas)", desc: "Copiar codRubr, ideTabRubr, qtd/fator (se houver) e vrRubr." },
+        { id: "rra", title: "Conferir infoRRA (se existir)", desc: "Se houver RRA, copiar descRRA e demais campos complementares." }
+      );
+    }
+
+    if (is1210) {
+      base.push(
+        { id: "ideBenef", title: "Preencher ideBenef", desc: "Conferir cpfBenef." },
+        { id: "infoPgto", title: "Digitar infoPgto", desc: "Inserir cada linha: dtPgto, tpPgto, perRef, ideDmDev e vrLiq." },
+        { id: "irCompl", title: "Conferir infoIRComplem (se existir)", desc: "Dependentes (infoDep) e plano de saúde (planSaude) podem aparecer." }
+      );
+    }
+
+    base.push({ id: "validacao", title: "Validar antes de salvar", desc: "Compare os totais (somatórios) com a folha e revise rubricas e valores." });
+    return base;
+  }
+
+  function renderResumo(event) {
+    const root = document.createElement("div");
+    root.className = "grid2";
+
+    const s = event.summary || {};
+    const leftPairs = [
+      { k: "tipo", v: event.type },
+      { k: "arquivo", v: event.filename },
+      { k: "Id", v: s.id || "" },
+      { k: "perApur", v: s.perApur || "" },
+      { k: "tpAmb", v: s.tpAmb || "" },
+      { k: "indRetif", v: s.indRetif || "" },
+      { k: "nrInsc", v: s.nrInsc || "" },
+      { k: "CPF (trabalhador/beneficiário)", v: s.cpfTrab || s.cpfBenef || "" },
+      { k: "verProc", v: s.verProc || "" }
+    ];
+
+    const left = kvBlock("Identificação (rápida)", leftPairs);
+
+    const right = document.createElement("div");
+    right.style.display = "grid";
+    right.style.gap = "12px";
+
+    const countsPairs = [];
+    if (event.type === "S-1200") {
+      const nItens = (event.extracted?.tables?.itensRemun || []).length;
+      const total = (event.extracted?.tables?.itensRemun || []).reduce((a,r) => a + (Number(r.vrRubr)||0), 0);
+      countsPairs.push(
+        { k: "itensRemun (linhas)", v: String(nItens) },
+        { k: "somatório vrRubr", v: fmtMoney(total) }
+      );
+    }
+    if (event.type === "S-1210") {
+      const nPg = (event.extracted?.tables?.infoPgto || []).length;
+      const total = (event.extracted?.tables?.infoPgto || []).reduce((a,r) => a + (Number(r.vrLiq)||0), 0);
+      countsPairs.push(
+        { k: "infoPgto (linhas)", v: String(nPg) },
+        { k: "somatório vrLiq", v: fmtMoney(total) }
+      );
+    }
+
+    right.appendChild(buildChecklist(event));
+    if (countsPairs.length) right.appendChild(kvBlock("Conferências", countsPairs));
+
+    root.appendChild(left);
+    root.appendChild(right);
+    return root;
+  }
+
+  function renderVerbas(event) {
+    const root = document.createElement("div");
+
+    if (event.type !== "S-1200") {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "Esta aba é específica do S-1200. Selecione um evento S-1200 na lista.";
+      root.appendChild(p);
+      return root;
+    }
+
+    const rowsAll = event.extracted?.tables?.itensRemun || [];
+    const tools = document.createElement("div");
+    tools.className = "tableTools";
+
+    const left = document.createElement("div");
+    left.classList.add("toolsLeft");
+    left.style.display = "flex";
+    left.style.gap = "10px";
+    left.style.flexWrap = "wrap";
+    const pill = document.createElement("span");
+    pill.className = "pill";
+    const total = rowsAll.reduce((a,r) => a + (Number(r.vrRubr)||0), 0);
+    pill.textContent = "Linhas: " + rowsAll.length + " | Somatório vrRubr: " + fmtMoney(total);
+    left.appendChild(pill);
+
+    const filter = document.createElement("input");
+    filter.className = "search";
+    filter.placeholder = "Filtrar rubricas (codRubr, ideDmDev, lotação, valor)";
+    filter.style.maxWidth = "520px";
+    left.appendChild(filter);
+
+    const right = document.createElement("div");
+    right.classList.add("toolsRight");
+    right.style.display = "flex";
+    right.style.gap = "8px";
+    right.style.flexWrap = "wrap";
+
+    const btnListCod = document.createElement("button");
+    btnListCod.className = "btn";
+    btnListCod.textContent = "Copiar lista codRubr";
+    btnListCod.onclick = () => {
+      const txt = rowsAll.map(r => r.codRubr).filter(Boolean).join("\n");
+      copyToClipboard(txt);
+    };
+
+    const btnListLinha = document.createElement("button");
+    btnListLinha.className = "btn";
+    btnListLinha.textContent = "Copiar codRubr | vrRubr";
+    btnListLinha.onclick = () => {
+      const txt = rowsAll.map(r => `${r.codRubr}\t${r.vrRubr}`).join("\n");
+      copyToClipboard(txt);
+    };
+
+    right.appendChild(btnListCod);
+    right.appendChild(btnListLinha);
+
+    tools.appendChild(left);
+    tools.appendChild(right);
+
+    const table = document.createElement("table");
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>origem</th>
+          <th>ideDmDev</th>
+          <th>codCateg</th>
+          <th>perRef</th>
+          <th>codLotacao</th>
+          <th>codRubr</th>
+          <th>ideTabRubr</th>
+          <th>qtdRubr</th>
+          <th>fatorRubr</th>
+          <th>vrRubr</th>
+          <th>dtAcConv</th>
+          <th>tpAcConv</th>
+          <th>dscADC</th>
+          <th class="copyColHeader">Copiar</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+    const tbody = table.querySelector("tbody");
+
+    function renderRows(q) {
+      tbody.innerHTML = "";
+      const qq = (q || "").trim().toLowerCase();
+      const rows = !qq ? rowsAll : rowsAll.filter(r => Object.values(r).join(" ").toLowerCase().includes(qq));
+
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        const cells = [
+          r.origem, r.ideDmDev, r.codCateg, r.perRef, r.codLotacao, r.codRubr, r.ideTabRubr,
+          r.qtdRubr, r.fatorRubr, r.vrRubr, r.dtAcConv, r.tpAcConv, r.dscADC
+        ].map(v => `<td class="mono">${escapeHtml(v || "")}</td>`).join("");
+
+        tr.innerHTML = cells + `<td></td>`;
+        const td = tr.querySelectorAll("td")[13];
+        td.classList.add("copyCell");
+
+        const b1 = document.createElement("button");
+        b1.className = "btn";
+        b1.textContent = "Linha";
+        b1.onclick = () => copyToClipboard(`${r.origem}\t${r.perRef}\t${r.codRubr}\t${r.ideTabRubr}\t${r.qtdRubr}\t${r.fatorRubr}\t${r.vrRubr}`);
+
+        const b2 = document.createElement("button");
+        b2.className = "btn";
+        b2.textContent = "Só valor";
+        b2.onclick = () => copyToClipboard(String(r.vrRubr || ""));
+
+        td.style.display = "flex";
+        td.style.gap = "8px";
+        td.style.alignItems = "center";
+        td.appendChild(b1);
+        td.appendChild(b2);
+
+        tbody.appendChild(tr);
+      });
+
+      const total2 = rows.reduce((a,rr) => a + (Number(rr.vrRubr)||0), 0);
+      pill.textContent = "Linhas: " + rows.length + " | Somatório vrRubr: " + fmtMoney(total2);
+    }
+
+    filter.addEventListener("input", () => renderRows(filter.value));
+    renderRows("");
+
+    root.appendChild(tools);
+    root.appendChild(table);
+    return root;
+  }
+
+  function renderPagamentos(event) {
+    const root = document.createElement("div");
+
+    if (event.type !== "S-1210") {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "Esta aba é específica do S-1210. Selecione um evento S-1210 na lista.";
+      root.appendChild(p);
+      return root;
+    }
+
+    const rowsAll = event.extracted?.tables?.infoPgto || [];
+    const tools = document.createElement("div");
+    tools.className = "tableTools";
+
+    const left = document.createElement("div");
+    left.classList.add("toolsLeft");
+    left.style.display = "flex";
+    left.style.gap = "10px";
+    left.style.flexWrap = "wrap";
+
+    const pill = document.createElement("span");
+    pill.className = "pill";
+    const total = rowsAll.reduce((a,r) => a + (Number(r.vrLiq)||0), 0);
+    pill.textContent = "Linhas: " + rowsAll.length + " | Somatório vrLiq: " + fmtMoney(total);
+    left.appendChild(pill);
+
+    const filter = document.createElement("input");
+    filter.className = "search";
+    filter.placeholder = "Filtrar pagamentos (ideDmDev, dtPgto, valor)";
+    filter.style.maxWidth = "520px";
+    left.appendChild(filter);
+
+    const right = document.createElement("div");
+    right.classList.add("toolsRight");
+    right.style.display = "flex";
+    right.style.gap = "8px";
+    right.style.flexWrap = "wrap";
+
+    const btnLines = document.createElement("button");
+    btnLines.className = "btn";
+    btnLines.textContent = "Copiar dtPgto | ideDmDev | vrLiq";
+    btnLines.onclick = () => {
+      const txt = rowsAll.map(r => `${r.dtPgto}\t${r.ideDmDev}\t${r.vrLiq}`).join("\n");
+      copyToClipboard(txt);
+    };
+    right.appendChild(btnLines);
+
+    tools.appendChild(left);
+    tools.appendChild(right);
+
+    const table = document.createElement("table");
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>dtPgto</th>
+          <th>tpPgto</th>
+          <th>perRef</th>
+          <th>ideDmDev</th>
+          <th>vrLiq</th>
+          <th class="copyColHeader">Copiar</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+    const tbody = table.querySelector("tbody");
+
+    function renderRows(q) {
+      tbody.innerHTML = "";
+      const qq = (q || "").trim().toLowerCase();
+      const rows = !qq ? rowsAll : rowsAll.filter(r => Object.values(r).join(" ").toLowerCase().includes(qq));
+
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        const cells = [r.dtPgto, r.tpPgto, r.perRef, r.ideDmDev, r.vrLiq]
+          .map(v => `<td class="mono">${escapeHtml(v || "")}</td>`).join("");
+        tr.innerHTML = cells + `<td></td>`;
+        const td = tr.querySelectorAll("td")[5];
+        td.classList.add("copyCell");
+
+        const b1 = document.createElement("button");
+        b1.className = "btn";
+        b1.textContent = "Linha";
+        b1.onclick = () => copyToClipboard(`${r.dtPgto}\t${r.tpPgto}\t${r.perRef}\t${r.ideDmDev}\t${r.vrLiq}`);
+
+        const b2 = document.createElement("button");
+        b2.className = "btn";
+        b2.textContent = "Só valor";
+        b2.onclick = () => copyToClipboard(String(r.vrLiq || ""));
+
+        td.style.display = "flex";
+        td.style.gap = "8px";
+        td.appendChild(b1);
+        td.appendChild(b2);
+
+        tbody.appendChild(tr);
+      });
+
+      const total2 = rows.reduce((a,rr) => a + (Number(rr.vrLiq)||0), 0);
+      pill.textContent = "Linhas: " + rows.length + " | Somatório vrLiq: " + fmtMoney(total2);
+    }
+
+    filter.addEventListener("input", () => renderRows(filter.value));
+    renderRows("");
+
+    root.appendChild(tools);
+    root.appendChild(table);
+
+    const deps = event.extracted?.data?.deps || [];
+    const plan = event.extracted?.data?.planSaude || [];
+    const infoIR = event.extracted?.data?.infoIR || [];
+
+    const compWrap = document.createElement("div");
+    compWrap.style.marginTop = "12px";
+    compWrap.className = "grid2";
+
+    const depPairs = deps.length
+      ? deps.map((d, i) => ({
+          k: `infoDep[${i+1}] tpDep/cpf/nome/dtNascto/depIRRF`,
+          v: `${d.tpDep} | ${d.cpfDep} | ${d.nome} | ${d.dtNascto} | ${d.depIRRF}`
+        }))
+      : [{k:"infoDep", v:"(não existe no XML)"}];
+
+    const planPairs = plan.length
+      ? plan.map((p, i) => ({
+          k: `planSaude[${i+1}] cnpjOper/regANS/vlrSaudeTit`,
+          v: `${p.cnpjOper} | ${p.regANS} | ${p.vlrSaudeTit}`
+        }))
+      : [{k:"planSaude", v:"(não existe no XML)"}];
+
+    const irPairs = infoIR.length
+      ? infoIR.map((x, i) => ({
+          k: `infoIR[${i+1}] tpCR/tpRend/vlrDedDep`,
+          v: `${x.tpCR} | ${x.tpRend} | ${x.vlrDedDep}`
+        }))
+      : [{k:"infoIR", v:"(não existe no XML)"}];
+
+    compWrap.appendChild(kvBlock("infoIRComplem - Dependentes", depPairs));
+    compWrap.appendChild(kvBlock("infoIRComplem - Plano de Saúde / IR", planPairs.concat(irPairs)));
+
+    root.appendChild(compWrap);
+
+    return root;
+  }
+
+  function renderTodos(event) {
+    const root = document.createElement("div");
+
+    const tools = document.createElement("div");
+    tools.className = "tableTools";
+
+    const left = document.createElement("div");
+    left.classList.add("toolsLeft");
+    left.style.display = "flex";
+    left.style.gap = "10px";
+    left.style.flexWrap = "wrap";
+
+    const pill = document.createElement("span");
+    pill.className = "pill";
+    pill.textContent = "Campos (folhas): " + (event.flattened?.length || 0);
+    left.appendChild(pill);
+
+    const filter = document.createElement("input");
+    filter.className = "search";
+    filter.placeholder = "Pesquisar caminho ou valor (ex.: codRubr, vrRubr, dtPgto, matricula)";
+    filter.style.maxWidth = "520px";
+    left.appendChild(filter);
+
+    const right = document.createElement("div");
+    right.classList.add("toolsRight");
+    right.style.display = "flex";
+    right.style.gap = "8px";
+    right.style.flexWrap = "wrap";
+
+    const btnCopyAll = document.createElement("button");
+    btnCopyAll.className = "btn";
+    btnCopyAll.textContent = "Copiar tabela (path\tvalue)";
+    btnCopyAll.onclick = () => {
+      const txt = (event.flattened || []).map(r => `${r.path}\t${r.value}`).join("\n");
+      copyToClipboard(txt);
+    };
+    right.appendChild(btnCopyAll);
+
+    tools.appendChild(left);
+    tools.appendChild(right);
+
+    const table = document.createElement("table");
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th style="width:62%">caminho</th>
+          <th>valor</th>
+          <th class="copyColHeader">Copiar</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+    const tbody = table.querySelector("tbody");
+
+    function renderRows(q) {
+      tbody.innerHTML = "";
+      const qq = (q || "").trim().toLowerCase();
+      const rows = !qq ? (event.flattened || []) : (event.flattened || []).filter(r =>
+        (r.path + " " + r.value).toLowerCase().includes(qq)
+      );
+
+      pill.textContent = "Campos (folhas): " + rows.length;
+
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="mono">${escapeHtml(r.path)}</td>
+          <td class="mono">${escapeHtml(r.value)}</td>
+          <td></td>
+        `;
+        const td = tr.querySelectorAll("td")[2];
+        td.classList.add("copyCell");
+        td.style.display = "flex";
+        td.style.gap = "8px";
+        const b1 = document.createElement("button");
+        b1.className = "btn";
+        b1.textContent = "Valor";
+        b1.onclick = () => copyToClipboard(String(r.value));
+        const b2 = document.createElement("button");
+        b2.className = "btn";
+        b2.textContent = "Linha";
+        b2.onclick = () => copyToClipboard(`${r.path}=${r.value}`);
+        td.appendChild(b1);
+        td.appendChild(b2);
+        tbody.appendChild(tr);
+      });
+    }
+
+    filter.addEventListener("input", () => renderRows(filter.value));
+    renderRows("");
+
+    root.appendChild(tools);
+    root.appendChild(table);
+    return root;
+  }
+
+  function renderXml(event) {
+    const root = document.createElement("div");
+    const tools = document.createElement("div");
+    tools.className = "tableTools";
+
+    const left = document.createElement("div");
+    left.innerHTML = `<span class="pill">XML do arquivo: <span class="mono">${escapeHtml(event.filename)}</span></span>`;
+    const right = document.createElement("div");
+    right.classList.add("toolsRight");
+    right.style.display = "flex";
+    right.style.gap = "8px";
+
+    const b = document.createElement("button");
+    b.className = "btn";
+    b.textContent = "Copiar XML";
+    b.onclick = () => copyToClipboard(event.text || "");
+    right.appendChild(b);
+
+    tools.appendChild(left);
+    tools.appendChild(right);
+
+    const pre = document.createElement("pre");
+    pre.textContent = event.text || "";
+
+    root.appendChild(tools);
+    root.appendChild(pre);
+    return root;
+  }
+
+  function renderContent() {
+    const content = document.getElementById("content");
+    content.innerHTML = "";
+    const e = getActiveEvent();
+    if (!e) {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "Importe os XMLs e selecione um evento na lista à esquerda.";
+      content.appendChild(p);
+      return;
+    }
+
+    if (state.activeTab === "resumo") content.appendChild(renderResumo(e));
+    if (state.activeTab === "verbas") content.appendChild(renderVerbas(e));
+    if (state.activeTab === "pagamentos") content.appendChild(renderPagamentos(e));
+    if (state.activeTab === "todos") content.appendChild(renderTodos(e));
+    if (state.activeTab === "xml") content.appendChild(renderXml(e));
+  }
+
+  function exportCSVFromTab(event) {
+    function toCSV(rows) {
+      if (!rows || !rows.length) return "";
+      const cols = Object.keys(rows[0]);
+      const esc = (v) => {
+        const s = String(v ?? "");
+        const needs = /[",\n\r\t;]/.test(s);
+        const safe = s.replaceAll('"','""');
+        return needs ? `"${safe}"` : safe;
+      };
+      const lines = [];
+      lines.push(cols.map(esc).join(";"));
+      rows.forEach(r => {
+        lines.push(cols.map(c => esc(r[c])).join(";"));
+      });
+      return lines.join("\n");
+    }
+
+    let csv = "";
+    let fname = "export.csv";
+
+    if (state.activeTab === "verbas" && event.type === "S-1200") {
+      csv = toCSV(event.extracted?.tables?.itensRemun || []);
+      fname = "S1200_itensRemun.csv";
+    } else if (state.activeTab === "pagamentos" && event.type === "S-1210") {
+      csv = toCSV(event.extracted?.tables?.infoPgto || []);
+      fname = "S1210_infoPgto.csv";
+    } else if (state.activeTab === "todos") {
+      csv = toCSV(event.flattened || []);
+      fname = "todos_os_dados.csv";
+    } else {
+      csv = "aba_sem_tabela";
+      fname = "export.csv";
+    }
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast("CSV gerado");
+  }
+
+  async function handleFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+
+    for (const f of files) {
+      const text = await f.text();
+      try {
+        const ev = buildEventFromFile(f.name, text);
+        state.events.push(ev);
+      } catch (err) {
+        console.error(err);
+        toast("Falha ao ler " + f.name);
+      }
+    }
+
+    if (!state.activeId && state.events.length) {
+      state.activeId = state.events[0].id;
+    }
+
+    updateCounts();
+    renderEventList();
+    setMainHeader(getActiveEvent());
+    renderContent();
+  }
+
+  document.getElementById("fileInput").addEventListener("change", (e) => {
+    handleFiles(e.target.files);
+    e.target.value = "";
+  });
+
+  document.getElementById("eventFilter").addEventListener("input", () => renderEventList());
+
+  document.getElementById("btnClear").addEventListener("click", () => {
+    state.events = [];
+    state.activeId = null;
+    updateCounts();
+    renderEventList();
+    setMainHeader(null);
+    renderContent();
+    toast("Limpo");
+  });
+
+  document.getElementById("btnLoadEmbedded").addEventListener("click", () => {
+    try {
+      EMBEDDED_XMLS.forEach(x => {
+        const ev = buildEventFromFile(x.name, x.text);
+        state.events.push(ev);
+      });
+      if (!state.activeId && state.events.length) state.activeId = state.events[0].id;
+      updateCounts();
+      renderEventList();
+      setMainHeader(getActiveEvent());
+      renderContent();
+      toast("XMLs embutidos carregados");
+    } catch (e) {
+      console.error(e);
+      toast("Falha ao carregar embutidos");
+    }
+  });
+
+  document.querySelectorAll(".tab").forEach(t => {
+    t.addEventListener("click", () => setActiveTab(t.dataset.tab));
+  });
+
+  document.getElementById("btnCopySummary").addEventListener("click", () => {
+    const e = getActiveEvent();
+    if (!e) return;
+    const s = e.summary || {};
+    const lines = [
+      `tipo: ${e.type}`,
+      `arquivo: ${e.filename}`,
+      `Id: ${s.id || ""}`,
+      `perApur: ${s.perApur || ""}`,
+      `tpAmb: ${s.tpAmb || ""}`,
+      `indRetif: ${s.indRetif || ""}`,
+      `nrInsc: ${s.nrInsc || ""}`,
+      `cpf: ${s.cpfTrab || s.cpfBenef || ""}`,
+      `verProc: ${s.verProc || ""}`
+    ].join("\n");
+    copyToClipboard(lines);
+  });
+
+  document.getElementById("btnCopyJSON").addEventListener("click", () => {
+    const e = getActiveEvent();
+    if (!e) return;
+    const obj = {
+      filename: e.filename,
+      type: e.type,
+      summary: e.summary,
+      extracted: e.extracted,
+      flattened_count: e.flattened?.length || 0
+    };
+    copyToClipboard(JSON.stringify(obj, null, 2));
+  });
+
+  document.getElementById("btnExportCSV").addEventListener("click", () => {
+    const e = getActiveEvent();
+    if (!e) return;
+    exportCSVFromTab(e);
+  });
+
+  document.getElementById("btnResetChecklist").addEventListener("click", () => {
+    const e = getActiveEvent();
+    if (!e) return;
+    localStorage.removeItem(checklistKey(e));
+    renderContent();
+    toast("Checklist resetado");
+  });
+
+  const drop = document.getElementById("dropZone");
+  drop.addEventListener("dragover", (ev) => {
+    ev.preventDefault();
+    drop.classList.add("dragover");
+  });
+  drop.addEventListener("dragleave", () => drop.classList.remove("dragover"));
+  drop.addEventListener("drop", (ev) => {
+    ev.preventDefault();
+    drop.classList.remove("dragover");
+    if (ev.dataTransfer?.files?.length) {
+      handleFiles(ev.dataTransfer.files);
+    }
+  });
+
+  updateCounts();
+  renderEventList();
+  renderContent();
+</script>
+</body>
+</html>
